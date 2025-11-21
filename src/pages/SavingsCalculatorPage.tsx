@@ -13,14 +13,15 @@ export function SavingsCalculatorPage() {
     onChange: handleMonthlyAmountChange,
   } = useAmountInput();
   const [savingsPeriod, setSavingsPeriod] = useState(0);
+  const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
 
   const handleSavingsPeriodChange = (value: number) => {
     setSavingsPeriod(value);
   };
 
-  const [selectedProductIds, setSelectedProductIds] = useState<Set<string>>(new Set());
-
-  const handleCheckboxChange = (id: string) => {};
+  const handleCheckboxChange = (id: string) => {
+    setSelectedProductId(prev => (prev === id ? null : id));
+  };
 
   const filteredData = useMemo(() => {
     return savingsProducts.filter(product => {
@@ -84,9 +85,9 @@ export function SavingsCalculatorPage() {
                 product={product}
                 right={
                   <Checkbox.Circle
-                    checked={selectedProductIds.has(product.id)}
+                    checked={selectedProductId === product.id}
                     onChange={() => handleCheckboxChange(product.id)}
-                    color={selectedProductIds.has(product.id) ? colors.green500 : undefined}
+                    color={selectedProductId === product.id ? colors.green500 : undefined}
                   />
                 }
               />
@@ -99,9 +100,9 @@ export function SavingsCalculatorPage() {
                 product={product}
                 right={
                   <Checkbox.Circle
-                    checked={selectedProductIds.has(product.id)}
+                    checked={selectedProductId === product.id}
                     onChange={() => handleCheckboxChange(product.id)}
-                    color={selectedProductIds.has(product.id) ? colors.green500 : undefined}
+                    color={selectedProductId === product.id ? colors.green500 : undefined}
                   />
                 }
               />
