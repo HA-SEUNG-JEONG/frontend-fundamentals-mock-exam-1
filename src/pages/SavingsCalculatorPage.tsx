@@ -1,12 +1,45 @@
-import { useMemo, useState } from 'react';
-import { Border, Checkbox, colors, NavigationBar, SelectBottomSheet, Spacing, Tab, TextField } from 'tosslib';
+import { useState } from 'react';
+import {
+  Border,
+  Checkbox,
+  colors,
+  ListHeader,
+  ListRow,
+  NavigationBar,
+  SelectBottomSheet,
+  Spacing,
+  Tab,
+  TextField,
+} from 'tosslib';
 import { SavingsProductItem } from '../components/SavingsProductItem';
 import { useAmountInput } from '../hooks/useAmountInput';
 import { useSavingsProducts } from '../hooks/useSavingsProducts';
 
+import { SavingsProduct } from '../types';
+import { calculateExpectedProfit, calculateRecommendedMonthlyAmount } from 'utils';
+
+const RECOMMENDED_PRODUCTS: SavingsProduct[] = [
+  {
+    id: 'basic',
+    name: '기본 정기적금',
+    annualRate: 3.2,
+    minMonthlyAmount: 100000,
+    maxMonthlyAmount: 500000,
+    availableTerms: 12,
+  },
+  {
+    id: 'advanced',
+    name: '고급 정기적금',
+    annualRate: 2.8,
+    minMonthlyAmount: 50000,
+    maxMonthlyAmount: 1000000,
+    availableTerms: 24,
+  },
+];
+
 export function SavingsCalculatorPage() {
   const { savingsProducts } = useSavingsProducts();
-  const { displayValue: goalAmountDisplay, onChange: handleGoalAmountChange } = useAmountInput();
+  const { amount: goalAmount, displayValue: goalAmountDisplay, onChange: handleGoalAmountChange } = useAmountInput();
   const {
     amount: monthlyAmount,
     displayValue: monthlyAmountDisplay,
@@ -14,6 +47,7 @@ export function SavingsCalculatorPage() {
   } = useAmountInput();
   const [savingsPeriod, setSavingsPeriod] = useState(0);
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'products' | 'results'>('products');
 
   const handleSavingsPeriodChange = (value: number) => {
     setSavingsPeriod(value);
@@ -23,14 +57,29 @@ export function SavingsCalculatorPage() {
     setSelectedProductId(prev => (prev === id ? null : id));
   };
 
-  const filteredData = useMemo(() => {
-    return savingsProducts.filter(product => {
-      const matchesMonthlyAmount =
-        monthlyAmount === 0 || (product.minMonthlyAmount <= monthlyAmount && product.maxMonthlyAmount >= monthlyAmount);
-      const matchesSavingsPeriod = savingsPeriod === 0 || product.availableTerms === savingsPeriod;
-      return matchesMonthlyAmount && matchesSavingsPeriod;
-    });
-  }, [savingsProducts, monthlyAmount, savingsPeriod]);
+  const filteredSavingsProducts = savingsProducts.filter(product => {
+    const matchesMonthlyAmount =
+      monthlyAmount === 0 || (product.minMonthlyAmount <= monthlyAmount && product.maxMonthlyAmount >= monthlyAmount);
+    const matchesSavingsPeriod = savingsPeriod === 0 || product.availableTerms === savingsPeriod;
+    return matchesMonthlyAmount && matchesSavingsPeriod;
+  });
+
+  // 선택된 상품
+  const selectedProduct = selectedProductId
+    ? savingsProducts.find(product => product.id === selectedProductId) || null
+    : null;
+
+  // 추천 월 납입액
+  const recommendedMonthlyAmount = calculateRecommendedMonthlyAmount(selectedProduct, goalAmount, savingsPeriod);
+
+  // 예상 수익
+  const expectedProfitAmount = calculateExpectedProfit(selectedProduct, monthlyAmount, savingsPeriod);
+
+  const differenceFromGoal = !selectedProductId || goalAmount === 0 ? 0 : goalAmount - expectedProfitAmount;
+
+  const availableTerms = Array.from(new Set(savingsProducts.map(product => product.availableTerms))).sort(
+    (a, b) => a - b
+  );
 
   return (
     <>
@@ -60,133 +109,129 @@ export function SavingsCalculatorPage() {
         value={savingsPeriod}
         onChange={value => handleSavingsPeriodChange(value)}
       >
-        <SelectBottomSheet.Option value={6}>6개월</SelectBottomSheet.Option>
-        <SelectBottomSheet.Option value={12}>12개월</SelectBottomSheet.Option>
-        <SelectBottomSheet.Option value={24}>24개월</SelectBottomSheet.Option>
+        {availableTerms.map(term => (
+          <SelectBottomSheet.Option key={term} value={term}>
+            {term}개월
+          </SelectBottomSheet.Option>
+        ))}
       </SelectBottomSheet>
 
       <Spacing size={24} />
       <Border height={16} />
       <Spacing size={8} />
 
-      <Tab onChange={() => {}}>
-        <Tab.Item value="products" selected={true}>
+      <Tab onChange={value => setActiveTab(value as 'products' | 'results')}>
+        <Tab.Item value="products" selected={activeTab === 'products'}>
           적금 상품
         </Tab.Item>
-        <Tab.Item value="results" selected={false}>
+        <Tab.Item value="results" selected={activeTab === 'results'}>
           계산 결과
         </Tab.Item>
       </Tab>
 
-      {filteredData && filteredData.length > 0
-        ? filteredData.map(product => (
-            <div key={product.id}>
-              <SavingsProductItem
-                product={product}
-                right={
-                  <Checkbox.Circle
-                    checked={selectedProductId === product.id}
-                    onChange={() => handleCheckboxChange(product.id)}
-                    color={selectedProductId === product.id ? colors.green500 : undefined}
+      {activeTab === 'products' && (
+        <>
+          {filteredSavingsProducts && filteredSavingsProducts.length > 0
+            ? filteredSavingsProducts.map(product => (
+                <div key={product.id}>
+                  <SavingsProductItem
+                    product={product}
+                    right={
+                      <Checkbox.Circle
+                        checked={selectedProductId === product.id}
+                        onChange={() => handleCheckboxChange(product.id)}
+                        color={selectedProductId === product.id ? colors.green500 : undefined}
+                      />
+                    }
                   />
-                }
-              />
-              <Spacing size={8} />
-            </div>
-          ))
-        : savingsProducts.map(product => (
-            <div key={product.id}>
-              <SavingsProductItem
-                product={product}
-                right={
-                  <Checkbox.Circle
-                    checked={selectedProductId === product.id}
-                    onChange={() => handleCheckboxChange(product.id)}
-                    color={selectedProductId === product.id ? colors.green500 : undefined}
+                  <Spacing size={8} />
+                </div>
+              ))
+            : savingsProducts.map(product => (
+                <div key={product.id}>
+                  <SavingsProductItem
+                    product={product}
+                    right={
+                      <Checkbox.Circle
+                        checked={selectedProductId === product.id}
+                        onChange={() => handleCheckboxChange(product.id)}
+                        color={selectedProductId === product.id ? colors.green500 : undefined}
+                      />
+                    }
                   />
-                }
+                  <Spacing size={8} />
+                </div>
+              ))}
+        </>
+      )}
+
+      {activeTab === 'results' && selectedProductId && (
+        <>
+          <Spacing size={8} />
+
+          <ListRow
+            contents={
+              <ListRow.Texts
+                type="2RowTypeA"
+                top="예상 수익 금액"
+                topProps={{ color: colors.grey600 }}
+                bottom={`${expectedProfitAmount.toLocaleString('ko-KR')}원`}
+                bottomProps={{ fontWeight: 'bold', color: colors.blue600, fontSize: 24 }}
               />
-              <Spacing size={8} />
+            }
+          />
+          <ListRow
+            contents={
+              <ListRow.Texts
+                type="2RowTypeA"
+                top="목표 금액과의 차이"
+                topProps={{ color: colors.grey600 }}
+                bottom={`${differenceFromGoal >= 0 ? '+' : ''}${differenceFromGoal.toLocaleString('ko-KR')}원`}
+                bottomProps={{
+                  fontWeight: 'bold',
+                  color: differenceFromGoal >= 0 ? colors.blue600 : colors.red600,
+                }}
+              />
+            }
+          />
+          <ListRow
+            contents={
+              <ListRow.Texts
+                type="2RowTypeA"
+                top="추천 월 납입 금액"
+                topProps={{ color: colors.grey600 }}
+                bottom={`${recommendedMonthlyAmount.toLocaleString('ko-KR')}원`}
+                bottomProps={{ fontWeight: 'bold', color: colors.blue600 }}
+              />
+            }
+          />
+
+          <Spacing size={8} />
+          <Border height={16} />
+          <Spacing size={8} />
+
+          <ListHeader title={<ListHeader.TitleParagraph fontWeight="bold">추천 상품 목록</ListHeader.TitleParagraph>} />
+          <Spacing size={12} />
+
+          {RECOMMENDED_PRODUCTS.map(product => (
+            <div key={product.id}>
+              <SavingsProductItem product={product} />
             </div>
           ))}
 
-      {/* 아래는 계산 결과 탭 내용이에요. 계산 결과 탭을 구현할 때 주석을 해제해주세요. */}
-      {/* <Spacing size={8} />
+          <Spacing size={40} />
+        </>
+      )}
 
-       <ListRow
-         contents={
-           <ListRow.Texts
-             type="2RowTypeA"
-             top="예상 수익 금액"
-             topProps={{ color: colors.grey600 }}
-             bottom={`1,000,000원`}
-             bottomProps={{ fontWeight: 'bold', color: colors.blue600 }}
-           />
-         }
-       />
-       <ListRow
-         contents={
-           <ListRow.Texts
-             type="2RowTypeA"
-             top="목표 금액과의 차이"
-             topProps={{ color: colors.grey600 }}
-             bottom={`-500,000원`}
-             bottomProps={{ fontWeight: 'bold', color: colors.blue600 }}
-           />
-         }
-       />
-       <ListRow
-         contents={
-           <ListRow.Texts
-             type="2RowTypeA"
-             top="추천 월 납입 금액"
-             topProps={{ color: colors.grey600 }}
-             bottom={`100,000원`}
-             bottomProps={{ fontWeight: 'bold', color: colors.blue600 }}
-           />
-         }
-       />
-
-       <Spacing size={8} />
-       <Border height={16} />
-       <Spacing size={8} />
-
-       <ListHeader title={<ListHeader.TitleParagraph fontWeight="bold">추천 상품 목록</ListHeader.TitleParagraph>} />
-       <Spacing size={12} />
-
-       <ListRow
-         contents={
-           <ListRow.Texts
-             type="3RowTypeA"
-             top={'기본 정기적금'}
-             topProps={{ fontSize: 16, fontWeight: 'bold', color: colors.grey900 }}
-             middle={`연 이자율: 3.2%`}
-             middleProps={{ fontSize: 14, color: colors.blue600, fontWeight: 'medium' }}
-             bottom={`100,000원 ~ 500,000원 | 12개월`}
-             bottomProps={{ fontSize: 13, color: colors.grey600 }}
-           />
-         }
-         onClick={() => {}}
-       />
-       <ListRow
-         contents={
-           <ListRow.Texts
-             type="3RowTypeA"
-             top={'고급 정기적금'}
-             topProps={{ fontSize: 16, fontWeight: 'bold', color: colors.grey900 }}
-             middle={`연 이자율: 2.8%`}
-             middleProps={{ fontSize: 14, color: colors.blue600, fontWeight: 'medium' }}
-             bottom={`50,000원 ~ 1,000,000원 | 24개월`}
-             bottomProps={{ fontSize: 13, color: colors.grey600 }}
-           />
-         }
-         onClick={() => {}}
-       />
-
-       <Spacing size={40} /> */}
-
-      {/* 아래는 사용자가 적금 상품을 선택하지 않고 계산 결과 탭을 선택했을 때 출력해주세요. */}
-      {/* <ListRow contents={<ListRow.Texts type="1RowTypeA" top="상품을 선택해주세요." />} /> */}
+      {activeTab === 'results' && !selectedProductId && (
+        <div style={{ padding: '24px', textAlign: 'center' }}>
+          <ListRow
+            contents={
+              <ListRow.Texts type="1RowTypeA" top="상품을 선택해주세요." topProps={{ color: colors.grey500 }} />
+            }
+          />
+        </div>
+      )}
     </>
   );
 }
