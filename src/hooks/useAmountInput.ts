@@ -1,6 +1,6 @@
 import { ChangeEvent, useState } from 'react';
 
-export const useAmountInput = (initialValue: number = 0) => {
+export const useAmountInput = (initialValue = 0) => {
   const [amount, setAmount] = useState(initialValue);
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
