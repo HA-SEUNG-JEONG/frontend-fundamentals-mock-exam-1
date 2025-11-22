@@ -1,4 +1,4 @@
-import { Checkbox, colors, Flex, Spacing } from 'tosslib';
+import { Checkbox, colors, Spacing } from 'tosslib';
 import { SavingsProduct } from '../types';
 import { SavingsProductItem } from './SavingsProductItem';
 
@@ -20,7 +20,7 @@ export const SavingsProductList = ({
   return (
     <>
       {productsToDisplay.map(product => (
-        <Flex key={product.id}>
+        <div key={product.id}>
           <SavingsProductItem
             product={product}
             right={
@@ -32,7 +32,7 @@ export const SavingsProductList = ({
             }
           />
           <Spacing size={8} />
-        </Flex>
+        </div>
       ))}
     </>
   );
