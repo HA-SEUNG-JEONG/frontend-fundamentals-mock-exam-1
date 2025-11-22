@@ -1,5 +1,6 @@
 import { Assets, Spacing } from 'tosslib';
 import { SavingsProduct } from '../types';
+import { EmptyState } from './EmptyState';
 import { SavingsProductItem } from './SavingsProductItem';
 
 interface SavingsProductListProps {
@@ -15,7 +16,14 @@ export const SavingsProductList = ({
   selectedProductId,
   onProductSelect,
 }: SavingsProductListProps) => {
-  const productsToDisplay = filteredProducts && filteredProducts.length > 0 ? filteredProducts : allProducts;
+  const hasFilters = filteredProducts.length !== allProducts.length;
+  const hasNoResults = filteredProducts.length === 0 && hasFilters;
+
+  if (hasNoResults) {
+    return <EmptyState message="조건에 맞는 상품이 없습니다." />;
+  }
+
+  const productsToDisplay = filteredProducts.length > 0 ? filteredProducts : allProducts;
 
   return (
     <>
