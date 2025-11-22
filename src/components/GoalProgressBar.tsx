@@ -11,7 +11,7 @@ export const GoalProgressBar = ({ goalAmount, goalProgress }: GoalProgressBarPro
   }
 
   return (
-    <>
+    <div className="px-4">
       <Spacing size={4} />
       <ProgressBar
         progress={goalProgress}
@@ -34,6 +34,6 @@ export const GoalProgressBar = ({ goalAmount, goalProgress }: GoalProgressBarPro
         }
       />
       <Spacing size={16} />
-    </>
+    </div>
   );
 };
