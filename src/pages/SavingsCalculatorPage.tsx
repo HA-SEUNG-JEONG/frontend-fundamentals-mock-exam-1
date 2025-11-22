@@ -130,7 +130,13 @@ export function SavingsCalculatorPage() {
         </>
       )}
 
-      {activeTab === 'results' && !selectedProductId && <EmptyState message="상품을 선택해주세요." />}
+      {activeTab === 'results' && !selectedProductId && (
+        <EmptyState
+          message="상품을 선택해주세요."
+          onButtonClick={() => setActiveTab('products')}
+          buttonText="적금 상품 보기"
+        />
+      )}
     </>
   );
 }
