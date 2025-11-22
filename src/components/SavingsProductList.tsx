@@ -1,4 +1,4 @@
-import { Checkbox, colors, Spacing } from 'tosslib';
+import { Assets, Spacing } from 'tosslib';
 import { SavingsProduct } from '../types';
 import { SavingsProductItem } from './SavingsProductItem';
 
@@ -23,13 +23,8 @@ export const SavingsProductList = ({
         <div key={product.id}>
           <SavingsProductItem
             product={product}
-            right={
-              <Checkbox.Circle
-                checked={selectedProductId === product.id}
-                onChange={() => onProductSelect(product.id)}
-                color={selectedProductId === product.id ? colors.green500 : undefined}
-              />
-            }
+            right={selectedProductId === product.id ? <Assets.Icon name="icon-check-circle-green" /> : undefined}
+            onClick={() => onProductSelect(product.id)}
           />
           <Spacing size={8} />
         </div>

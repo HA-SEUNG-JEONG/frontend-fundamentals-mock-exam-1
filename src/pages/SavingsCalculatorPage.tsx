@@ -6,10 +6,10 @@ import { ErrorMessage } from '../components/ErrorMessage';
 import { GoalProgressBar } from '../components/GoalProgressBar';
 import { RecommendedProductList } from '../components/RecommendedProductList';
 import { SavingsProductList } from '../components/SavingsProductList';
-import { TabType } from '../constants';
 import { useAmountInput } from '../hooks/useAmountInput';
 import { useSavingsCalculator } from '../hooks/useSavingsCalculator';
 import { useSavingsProducts } from '../hooks/useSavingsProducts';
+import { TabType } from 'constants';
 
 export function SavingsCalculatorPage() {
   const { savingsProducts, error: productsError } = useSavingsProducts();

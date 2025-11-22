@@ -1,4 +1,4 @@
-import { Badge, Border, Checkbox, colors, Flex, ListHeader, Spacing, Text } from 'tosslib';
+import { Assets, Badge, Border, colors, Flex, ListHeader, Spacing, Text } from 'tosslib';
 import { SavingsProduct } from '../types';
 import { SavingsProductItem } from './SavingsProductItem';
 
@@ -37,13 +37,10 @@ export const RecommendedProductList = ({
                     추천
                   </Text>
                 </Badge>
-                <Checkbox.Circle
-                  checked={selectedProductId === product.id}
-                  onChange={() => onProductSelect(product.id)}
-                  color={selectedProductId === product.id ? colors.green500 : undefined}
-                />
+                {selectedProductId === product.id && <Assets.Icon name="icon-check-circle-green" />}
               </Flex>
             }
+            onClick={() => onProductSelect(product.id)}
           />
           <Spacing size={8} />
         </div>
